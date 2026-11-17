@@ -1,4 +1,4 @@
-"""CLI: python -m clipper {run,replay,auth,check,status}"""
+"""CLI: python -m clipper {setup,run,replay,auth,check,status}"""
 
 from __future__ import annotations
 
@@ -78,11 +78,15 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("platform", choices=["youtube", "tiktok", "instagram"])
     a.add_argument("--token", help="instagram: short-lived user token from Graph API Explorer")
 
+    sub.add_parser("setup", help="paste in your keys (checks they work, saves them to .env)")
     sub.add_parser("check", help="verify tools and credentials")
     sub.add_parser("status", help="recent clips")
 
     args = ap.parse_args(argv)
     _setup_logging(args.verbose)
+    if args.cmd == "setup":
+        from .setup_wizard import run as setup_run
+        return setup_run()
     cfg = load_config(args.config)
     state = State(cfg.data_dir)
 

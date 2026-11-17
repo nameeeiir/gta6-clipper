@@ -49,7 +49,19 @@ Whisper model and a render queue that runs the strongest spikes first. Rendering
 cost: with libx264 on 4 cores, a 20s clip takes about 12s. Raise `edit.render_workers` on bigger
 machines, or set `edit.encoder: h264_nvenc` with an NVIDIA GPU.
 
-## Setup
+## Easiest setup (no coding needed)
+
+**Windows:** double-click `SETUP-WINDOWS.bat`. It installs Python and ffmpeg if you don't have
+them, installs the clipper, then asks you to paste your Twitch keys (it walks you through getting
+them) and checks they work before saving them. When it says ALL SET, double-click
+`START-WINDOWS.bat` to start clipping.
+
+**Mac / Linux:** open Terminal in this folder and run `bash setup.sh`, then `bash start.sh`.
+
+Clips land in `data/clips/`. Nothing is posted anywhere until you connect upload accounts and
+turn posting on (see below). Run setup again any time to change your keys.
+
+## Setup (manual)
 
 Requires Python 3.10+ and ffmpeg 5 or newer.
 
