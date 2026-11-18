@@ -75,13 +75,16 @@ class DetectorCfg(BaseModel):
 
 
 class MomentCfg(BaseModel):
-    target_pre_s: float = 14.0  # context before the payoff
-    max_pre_s: float = 30.0
-    min_pre_s: float = 4.0
+    # Shorts viewers swipe within seconds: the payoff should land ~5s in, not halfway through.
+    target_pre_s: float = 6.0  # context before the payoff
+    max_pre_s: float = 15.0
+    min_pre_s: float = 2.5
     min_post_s: float = 3.5  # reaction after the payoff
-    max_post_s: float = 14.0
-    min_len_s: float = 10.0
-    max_len_s: float = 50.0
+    max_post_s: float = 12.0
+    min_len_s: float = 8.0
+    max_len_s: float = 35.0
+    # How far before the expected moment to look for the scream/crash/explosion.
+    impact_search_before_s: float = 9.0
     use_llm: bool = True
     llm_model: str = "claude-opus-5-5"
     llm_effort: str = "medium"
@@ -108,7 +111,7 @@ class EditCfg(BaseModel):
     height: int = 1920
     fps: int = 30
     layout: str = "auto"  # auto|blur|split|crop
-    gameplay_zoom: float = 1.2  # blur layout: how much bigger than fit-to-width the gameplay is
+    gameplay_zoom: float = 1.6  # blur layout: how much bigger than fit-to-width the gameplay is (crops the sides)
     speed: float = 1.07
     cut_dead_air: bool = True
     dead_air_min_s: float = 0.8
@@ -124,7 +127,8 @@ class EditCfg(BaseModel):
     loudness_lufs: float = -14.0
     captions: bool = True
     caption_font: str = "Inter Black"
-    caption_size: int = 88
+    caption_size: int = 96
+    caption_max_chars: int = 14  # per line; longer runs under TikTok/Reels' right-side buttons
     caption_color: str = "FFFFFF"
     caption_highlight: str = "FFE600"
     words_per_caption: int = 3

@@ -129,7 +129,7 @@ def _caption_events(sentences, tmap: TimeMap, layout: Layout, cfg, cx: int, hl: 
     cur: list = []
     for w in words:
         chars = sum(len(x[2]) + 1 for x in cur) + len(w[2])
-        if cur and (len(cur) >= cfg.words_per_caption or chars > 18 or w[0] - cur[-1][1] > 0.45 or cur[-1][3]):
+        if cur and (len(cur) >= cfg.words_per_caption or chars > cfg.caption_max_chars or w[0] - cur[-1][1] > 0.45 or cur[-1][3]):
             groups.append(cur)
             cur = []
         cur.append(w)

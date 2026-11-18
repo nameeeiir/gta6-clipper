@@ -56,8 +56,12 @@ class MomentPicker:
         ev = spike.event - src_wall0
         onset = spike.onset - src_wall0
 
-        # 1. payoff anchor: loudest sudden moment between a bit before the estimated event and chat onset
-        anchor, strength = media.find_impact(env, max(0.0, ev - 5.0), max(ev + 0.5, min(onset, ev + 3.0)))
+        # 1. payoff anchor: loudest sudden moment before chat reacted. The window is wide because
+        # viewers' stream delay differs from ours by several seconds either way; `prefer` keeps
+        # the search centred on the expected moment.
+        lo = max(0.0, ev - m.impact_search_before_s)
+        hi = max(lo + 0.5, onset - 0.3)
+        anchor, strength = media.find_impact(env, lo, hi, prefer=ev)
         if strength < 6.0:
             anchor = ev
         anchor = float(np.clip(anchor, m.min_pre_s, max(m.min_pre_s, dur - m.min_post_s)))

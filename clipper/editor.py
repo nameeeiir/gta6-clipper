@@ -19,6 +19,10 @@ from .moment import ClipPlan
 
 log = logging.getLogger(__name__)
 
+# Caption font shipped with the app (Inter Black, SIL OFL 1.1) so captions look the same on
+# Windows/Mac/Linux even when the font isn't installed.
+BUNDLED_FONTS = Path(__file__).parent / "fonts"
+
 
 @dataclass
 class RenderResult:
@@ -70,17 +74,20 @@ class VideoEditor:
             return g, Layout(caption_y=int(H * 0.66), hook_y=330, credit_y=150)
         # blur (default): blurred fill + big gameplay
         fg_w = _even(W * self.e.gameplay_zoom)
-        fg_h = _even(fg_w * src_h / src_w)
+        fg_h = min(_even(fg_w * src_h / src_w), _even(H * 0.62))
         crop_w = min(W, fg_w)
-        y = _even((H - fg_h) / 2 - 60)
+        y = _even((H - fg_h) / 2 - 80)
         g.append("[vsp]split=2[bg_src][fg_src]")
         g.append(
             f"[bg_src]scale=270:480:force_original_aspect_ratio=increase,crop=270:480,boxblur=12:2,"
             f"scale={W}:{H},eq=brightness=-0.10:saturation=1.15[bg]"
         )
-        g.append(f"[fg_src]scale={fg_w}:{fg_h},crop={crop_w}:{fg_h}[fg]")
+        g.append(f"[fg_src]scale={fg_w}:-2,crop={crop_w}:'min(ih,{fg_h})'[fg]")
         g.append(f"[bg][fg]overlay=(W-w)/2:{y},setsar=1[base]")
-        return g, Layout(caption_y=min(H - 330, y + fg_h + 170), hook_y=max(150, y - 190), credit_y=max(60, y - 40))
+        # TikTok/Reels/Shorts cover the bottom ~22% (username, description) and the top ~10%
+        # (tabs) with UI, so captions sit over the lower part of the gameplay, the hook above it.
+        return g, Layout(caption_y=min(int(H * 0.66), y + fg_h - 70), hook_y=max(270, y - 140),
+                         credit_y=min(int(H * 0.74), y + fg_h + 45))
 
     def _encoder_args(self) -> list[str]:
         e = self.e
@@ -116,6 +123,16 @@ class VideoEditor:
             credit=f"twitch.tv/{plan.channel}",
         )
         (job_dir / "captions.ass").write_text(ass_text, encoding="utf-8")
+        fontsdir = ""
+        if e.fonts_dir:
+            fontsdir = f":fontsdir={e.fonts_dir}"
+        elif BUNDLED_FONTS.is_dir():
+            # relative path (ffmpeg runs in job_dir): absolute Windows paths ("C:\...") break filter syntax
+            fdir = job_dir / "fonts"
+            fdir.mkdir(exist_ok=True)
+            for f in BUNDLED_FONTS.glob("*.[ot]tf"):
+                shutil.copyfile(f, fdir / f.name)
+            fontsdir = ":fontsdir=fonts"
 
         seek = max(0.0, plan.keep[0][0] - 1.0)
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", _fmt(seek), "-i", str(plan.src.resolve())]
@@ -182,7 +199,6 @@ class VideoEditor:
             v = "vf"
 
         # 5. captions / hook / credit
-        fontsdir = f":fontsdir={e.fonts_dir}" if e.fonts_dir else ""
         g.append(f"[{v}]ass=filename=captions.ass{fontsdir}[vsub]")
         v = "vsub"
 
@@ -237,6 +253,7 @@ class VideoEditor:
             *cmd, cwd=str(job_dir), stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE,
         )
         _, err = await proc.communicate()
+        shutil.rmtree(job_dir / "fonts", ignore_errors=True)
         if proc.returncode != 0:
             raise RuntimeError(f"render failed: {err.decode(errors='replace')[-2000:]}")
         if not self.e.keep_raw:

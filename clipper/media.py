@@ -79,10 +79,13 @@ def smooth(x: np.ndarray, frames: int) -> np.ndarray:
     return np.convolve(x, k, mode="same")
 
 
-def find_impact(env: np.ndarray, t_lo: float, t_hi: float) -> tuple[float, float]:
+def find_impact(env: np.ndarray, t_lo: float, t_hi: float, prefer: float | None = None,
+                prefer_db_per_s: float = 0.35) -> tuple[float, float]:
     """Find the most 'impactful' instant in [t_lo, t_hi] (seconds into env):
     a loud moment that is much louder than the second and a half before it
-    (screams, explosions, crashes). Returns (time, strength_db)."""
+    (screams, explosions, crashes). With `prefer`, candidates lose `prefer_db_per_s` per second
+    of distance from that time, so a wide window still favours the expected moment.
+    Returns (time, strength_db) where strength excludes the distance penalty."""
     if len(env) < 10:
         return (t_lo + t_hi) / 2, 0.0
     lo = max(0, int(t_lo / FRAME_S))
@@ -91,15 +94,22 @@ def find_impact(env: np.ndarray, t_lo: float, t_hi: float) -> tuple[float, float
         return (t_lo + t_hi) / 2, 0.0
     short = smooth(env, 4)  # 200 ms
     back = int(1.5 / FRAME_S)
-    best_t, best_v = (t_lo + t_hi) / 2, -1e9
+    vals = np.full(hi + 1, -1e9)
+    best_i, best_score = lo, -1e9
     for i in range(lo, hi + 1):
         prev = env[max(0, i - back) : i]
         base = float(np.median(prev)) if len(prev) else float(short[i])
         jump = float(short[i]) - base
-        v = jump + 0.35 * (float(short[i]) + 30)  # favour loud AND sudden
-        if v > best_v:
-            best_v, best_t = v, i * FRAME_S
-    return best_t, best_v
+        vals[i] = jump + 0.35 * (float(short[i]) + 30)  # favour loud AND sudden
+        score = vals[i] - (prefer_db_per_s * abs(i * FRAME_S - prefer) if prefer is not None else 0.0)
+        if score > best_score:
+            best_score, best_i = score, i
+    # The preference can drag the pick toward the end of a sustained scream; snap back to where
+    # this loud moment starts (earliest frame within 0.75s that is nearly as strong).
+    j = best_i
+    while j - 1 >= max(lo, best_i - int(0.75 / FRAME_S)) and vals[j - 1] >= vals[best_i] - 1.0:
+        j -= 1
+    return j * FRAME_S, float(vals[best_i])
 
 
 def quiet_point(env: np.ndarray, t: float, radius: float = 0.6) -> float:

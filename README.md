@@ -65,7 +65,7 @@ GTA 5 streams instead, double-click `TEST-WITH-GTA5.bat` (Mac: `bash start.sh --
 `WATCH-STREAMER.bat` and type their Twitch name, like `ishowspeed`
 (Mac: `bash start.sh --any-category --channels ishowspeed`).
 
-Clips land in `data/clips/`. Nothing is posted anywhere until you connect upload accounts and
+Finished clips land in `data/READY TO POST/`, named by streamer and title. Nothing is posted anywhere until you connect upload accounts and
 turn posting on (see below). Run setup again any time to change your keys.
 
 ## Setup (manual)
@@ -106,7 +106,8 @@ python -m clipper check
 
 ## Running
 
-Start in dry-run mode: clips render to `data/clips/<id>/` (the video plus `meta.json` with the
+Start in dry-run mode: finished clips are copied to `data/READY TO POST/`, and each one's working folder
+`data/clips/<id>/` has the video plus `meta.json` (with the
 cut, title, score and chat sample), but nothing is posted.
 
 ```bash
@@ -144,7 +145,8 @@ python -m clipper status
 |---|---|
 | Fewer, bigger moments | raise `detector.z_enter` (3 → 4) and `detector.min_ratio` |
 | More clips | lower them, and lower `detector.cooldown_s` |
-| Cut starts too early or late | `moment.target_pre_s` (and `detector.reaction_lag_s` if the anchor is off) |
+| Takes too long to get to the moment | lower `moment.target_pre_s` (default 6s of setup) |
+| Misses the moment entirely | raise `moment.impact_search_before_s` (default 9), or adjust `detector.reaction_lag_s` |
 | Facecam-on-top layout | `streamers.<name>.facecam: [x, y, w, h]` as fractions of the frame |
 | Faster on CPU | `transcribe.model: base.en`, `edit.preset: superfast` |
 

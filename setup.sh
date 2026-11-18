@@ -65,7 +65,7 @@ say "Final check"
 .venv/bin/python -m clipper check
 
 if [ "$KEYS_OK" -eq 0 ]; then
-    printf '\nALL SET. To start clipping run:  bash start.sh\nClips will appear in data/clips. Nothing gets posted anywhere.\n'
+    printf '\nALL SET. To start clipping run:  bash start.sh\nFinished clips appear in data/READY TO POST. Nothing gets posted anywhere.\n'
 else
     printf '\nAlmost done: the Twitch keys are still missing. Run  bash setup.sh  again once you have them.\n'
 fi

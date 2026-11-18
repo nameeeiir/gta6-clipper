@@ -84,7 +84,7 @@ Say "Final check"
 
 if ($keysOk) {
     Write-Host "`nALL SET. Double-click START-WINDOWS.bat to start clipping." -ForegroundColor Green
-    Write-Host "Clips will appear in the data\clips folder. Nothing gets posted anywhere."
+    Write-Host "Finished clips will appear in the data\READY TO POST folder. Nothing gets posted anywhere."
 } else {
     Write-Host "`nAlmost done: the Twitch keys are still missing. Double-click SETUP-WINDOWS.bat again once you have them." -ForegroundColor Yellow
 }

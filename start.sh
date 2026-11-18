@@ -6,5 +6,5 @@ if [ ! -x .venv/bin/python ]; then
     exit 1
 fi
 export PATH="$PWD/.venv/bin:$PATH"
-echo "Watching live GTA VI streams. Clips go to data/clips. Press Ctrl+C to stop."
+echo "Clipper starting. Finished clips go to data/READY TO POST. Press Ctrl+C to stop."
 exec .venv/bin/python -m clipper run "$@"

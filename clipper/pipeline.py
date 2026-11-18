@@ -15,6 +15,9 @@ import asyncio
 import itertools
 import json
 import logging
+import os
+import re
+import shutil
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -126,6 +129,7 @@ class ClipFactory:
                  res.layout, time.time() - t0, meta.title)
         self.state.update_clip(job.clip_id, status="rendered", title=meta.title, path=str(res.path))
         self._write_meta(job, plan, res, [])
+        self._publish_ready_copy(job, res.path, meta.title)
         if self.publish_enabled and postable and self.publishers:
             await self.upload_q.put((job, plan, res))
         elif self.publish_enabled and not postable:
@@ -151,12 +155,30 @@ class ClipFactory:
             finally:
                 self.upload_q.task_done()
 
+    def _publish_ready_copy(self, job: ClipJob, video: Path, title: str) -> None:
+        """Put the finished video in one easy-to-find folder: <data_dir>/READY TO POST/."""
+        try:
+            ready = Path(self.cfg.data_dir) / "READY TO POST"
+            ready.mkdir(parents=True, exist_ok=True)
+            safe = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "", f"{job.display_name} - {title}").strip(" .")[:90] or job.clip_id
+            stamp = time.strftime("%Y-%m-%d %H.%M", time.localtime(job.spike.event if job.spike.event > 1e9 else time.time()))
+            dest = ready / f"{stamp} {safe}.mp4"
+            if dest.exists():
+                dest = ready / f"{stamp} {safe} ({job.clip_id[-6:]}).mp4"
+            try:
+                os.link(video, dest)  # no extra disk space
+            except OSError:
+                shutil.copy2(video, dest)
+        except OSError:
+            log.warning("could not copy %s to READY TO POST", video, exc_info=True)
+
     def _write_meta(self, job: ClipJob, plan: ClipPlan, res, posts: list[dict]) -> None:
         job.job_dir.mkdir(parents=True, exist_ok=True)
         m = plan.meta
         rec = {
             "clip_id": job.clip_id, "channel": job.spike.channel, "video": str(res.path) if res else None,
-            "duration": round(res.duration, 2) if res else None, "title": m.title, "hook": m.hook_text,
+            "duration": round(res.duration, 2) if res else None,
+            "payoff_at_s": round(res.cover_ms / 1000, 2) if res else None, "title": m.title, "hook": m.hook_text,
             "description": m.description, "hashtags": m.hashtags, "quality_score": m.quality_score,
             "worth_posting": m.worth_posting, "metadata_source": m.source, "mood": plan.mood,
             "cut": {"start": plan.start, "end": plan.end, "anchor": plan.anchor, "keep": plan.keep},
@@ -274,7 +296,7 @@ class LiveClipper:
 
     async def _handle_spike(self, sess: ChannelSession, spike: Spike) -> None:
         m = self.cfg.moment
-        t0 = spike.event - m.max_pre_s - 3
+        t0 = spike.event - m.impact_search_before_s - m.max_pre_s - 2
         t1 = spike.event + m.max_post_s + 8
         buf = sess.capture.buffer
         if not buf.segments or buf.earliest_wall > spike.event + 1.0:
@@ -361,7 +383,7 @@ async def replay(cfg: Config, state: State, video: Path, chat_path: Path, channe
     log.info("replay: %d spikes: %s", len(spikes), [(round(s.event), s.mood, round(s.strength, 1)) for s in spikes])
     info = await media.probe(video)
     for sp in spikes:
-        t0 = max(0.0, sp.event - cfg.moment.max_pre_s - 3)
+        t0 = max(0.0, sp.event - cfg.moment.impact_search_before_s - cfg.moment.max_pre_s - 2)
         t1 = min(info.duration, sp.event + cfg.moment.max_post_s + 8)
         cid = f"{channel}-replay-{int(sp.event)}"
         job_dir = Path(cfg.edit.output_dir) / cid

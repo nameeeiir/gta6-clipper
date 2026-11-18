@@ -52,6 +52,10 @@ def test_replay_end_to_end(vod, tmp_path):
         info = asyncio.run(media.probe(__import__("pathlib").Path(r["video"])))
         assert (info.width, info.height) == (1080, 1920) and info.has_audio
         assert cfg.moment.min_len_s / cfg.edit.speed - 1 <= info.duration <= cfg.moment.max_len_s
+        # Shorts pacing: the payoff (cover frame = anchor) lands within the first ~7s of the clip
+        assert r["payoff_at_s"] <= 7.0, r["payoff_at_s"]
+    ready = sorted((tmp_path / "READY TO POST").glob("*.mp4"))
+    assert len(ready) == 2 and all(p.name.endswith(".mp4") and "Tester - " in p.name for p in ready), ready
     anchors = sorted(r["anchor_wall"] for r in res)
     for got, want in zip(anchors, EVENTS):
         assert abs(got - want) < 0.5, (got, want)

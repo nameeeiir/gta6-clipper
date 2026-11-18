@@ -22,10 +22,11 @@ detector:
   reaction_lag_s: 4.0       # chat reacts this long after the moment
 
 moment:
-  target_pre_s: 14          # seconds of setup before the payoff
-  max_post_s: 14
-  min_len_s: 10
-  max_len_s: 50
+  target_pre_s: 6           # seconds of setup before the payoff (lower = gets to the moment faster)
+  max_pre_s: 15
+  max_post_s: 12            # seconds of reaction kept after the payoff
+  min_len_s: 8
+  max_len_s: 35
   use_llm: true             # Claude quality gate + cut + title (needs ANTHROPIC_API_KEY)
   llm_model: claude-opus-5-5
   llm_effort: medium

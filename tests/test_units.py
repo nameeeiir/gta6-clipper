@@ -70,3 +70,25 @@ def test_chat_log_formats(tmp_path):
     jl.write_text('{"t": 2, "user": "b", "text": "hi"}\n{"t": 1, "user": "c", "text": "yo"}\n')
     assert load_chat_log(td) == [(3.5, "a", "KEKW")]
     assert [m[0] for m in load_chat_log(jl)] == [1.0, 2.0]
+
+
+def test_find_impact_wide_window_prefers_expected_moment():
+    fr = media.FRAME_S
+    env = np.full(int(40 / fr), -40.0)
+    for t in (10.0, 20.0):  # two equally loud bangs: the one nearer the expected moment wins
+        env[int(t / fr):int((t + 0.6) / fr)] = -5.0
+    t, strength = media.find_impact(env, 5.0, 30.0, prefer=19.0)
+    assert abs(t - 20.0) < 0.2 and strength > 6.0
+
+
+def test_impact_found_when_chat_lags_more_than_expected():
+    # Bang at 10s; viewers are ~8s further behind than we are, so chat only reacts at 22s and the
+    # detector's estimate (onset - 4s lag) is 18s. The old window [13, 21] missed the bang.
+    fr = media.FRAME_S
+    env = np.full(int(40 / fr), -40.0)
+    env[int(10.0 / fr):int(10.6 / fr)] = -5.0
+    onset, ev = 22.0, 18.0
+    t, strength = media.find_impact(env, ev - 9.0, onset - 0.3, prefer=ev)
+    assert abs(t - 10.0) < 0.2 and strength > 6.0
+    old_t, old_strength = media.find_impact(env, ev - 5.0, min(onset, ev + 3.0))
+    assert abs(old_t - 10.0) > 2.0

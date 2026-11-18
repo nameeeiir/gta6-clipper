@@ -31,7 +31,7 @@ SYSTEM = """You are the editor for a channel that posts short vertical clips (Yo
 
 For each candidate moment you get a timestamped transcript of the streamer, the chat messages that spiked, and a heuristic cut. Your job:
 1. Judge whether it is worth posting. Score 1-10 for how likely a stranger scrolling short-form video watches to the end. A chat spike with nothing visible or audible happening on stream (raid, sub train, chat meme unrelated to gameplay, streamer away) is not worth posting.
-2. Choose start_s and end_s (seconds on the same clock as the transcript) for maximum retention: begin as late as possible while a newcomer still understands the setup, so something is already happening in the first second; end shortly after the payoff and reaction land. Do not end mid-sentence. Stay inside the allowed bounds.
+2. Choose start_s and end_s (seconds on the same clock as the transcript) for maximum retention: begin as late as possible while a newcomer still understands the setup, so something is already happening in the first second and the payoff lands within about 3-7 seconds; end shortly after the payoff and reaction land. Most clips should be 12-30 seconds. Do not end mid-sentence. Stay inside the allowed bounds.
 3. Write hook_text: on-screen text for the first ~3 seconds, at most 6 words, that creates curiosity without spoiling the payoff. No emoji.
 4. Write a title (max 70 characters) that names the streamer, is accurate to what happens, and makes people want to watch. Never claim something that did not happen.
 5. Write a 1-2 sentence description that credits the streamer's Twitch channel.

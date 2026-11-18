@@ -41,7 +41,9 @@ def cmd_check(cfg, state: State) -> int:
         line(False, "faster-whisper", "optional: pip install faster-whisper (captions)")
     import subprocess
     fonts = subprocess.run(["fc-list", ":", "family"], capture_output=True, text=True).stdout if shutil.which("fc-list") else ""
-    line(cfg.edit.caption_font.split()[0] in fonts or bool(cfg.edit.fonts_dir), f"caption font '{cfg.edit.caption_font}'",
+    from .editor import BUNDLED_FONTS
+    bundled = any(BUNDLED_FONTS.glob("*.[ot]tf"))
+    line(cfg.edit.caption_font.split()[0] in fonts or bool(cfg.edit.fonts_dir) or bundled, f"caption font '{cfg.edit.caption_font}'",
          "optional: install it or set edit.fonts_dir; libass falls back to another font")
     print("credentials")
     line(bool(env("TWITCH_CLIENT_ID") and env("TWITCH_CLIENT_SECRET")), "Twitch app (TWITCH_CLIENT_ID/SECRET)", "required for live mode")
