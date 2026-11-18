@@ -65,6 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--dry-run", action="store_true", help="render but never post")
     r.add_argument("--post", action="store_true", help="post even if publish.dry_run is true in config")
     r.add_argument("--channels", nargs="*", help="override twitch.channels (disables auto-discovery)")
+    r.add_argument("--game", help='Twitch category to watch instead of twitch.game_name, e.g. "Grand Theft Auto V"')
 
     rp = sub.add_parser("replay", help="backtest on a VOD + chat log")
     rp.add_argument("--video", required=True, type=Path)
@@ -118,6 +119,8 @@ def main(argv: list[str] | None = None) -> int:
             cfg.publish.dry_run = True
         if args.post:
             cfg.publish.dry_run = False
+        if args.game:
+            cfg.twitch.game_name = args.game
         if args.channels:
             cfg.twitch.channels = [c.lower() for c in args.channels]
             cfg.twitch.auto_discover = False

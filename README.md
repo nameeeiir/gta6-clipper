@@ -58,6 +58,9 @@ them) and checks they work before saving them. When it says ALL SET, double-clic
 
 **Mac / Linux:** open Terminal in this folder and run `bash setup.sh`, then `bash start.sh`.
 
+**Before GTA 6 is out (Nov 19, 2026)** there are no GTA VI streams to clip. To see it work on live
+GTA 5 streams instead, double-click `TEST-WITH-GTA5.bat` (Mac: `bash start.sh --game "Grand Theft Auto V"`).
+
 Clips land in `data/clips/`. Nothing is posted anywhere until you connect upload accounts and
 turn posting on (see below). Run setup again any time to change your keys.
 
