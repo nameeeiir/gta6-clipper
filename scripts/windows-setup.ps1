@@ -1,12 +1,17 @@
-# One-time setup for Windows. Double-click SETUP-WINDOWS.bat instead of running this directly.
+# One-time setup for Windows. Don't run this directly: double-click SETUP-WINDOWS.bat in the main folder.
 # Installs Python and ffmpeg if missing (via winget), installs the clipper, then asks for your keys.
 $ErrorActionPreference = 'Continue'
-Set-Location -LiteralPath $PSScriptRoot
+$AppDir = Split-Path -Parent $PSScriptRoot
+Set-Location -LiteralPath $AppDir
+
+# Keep the window open if someone runs this file directly instead of SETUP-WINDOWS.bat.
+function Hold { if (-not $env:CLIPPER_FROM_BAT) { Read-Host "`nPress Enter to close" | Out-Null } }
 
 function Say($msg) { Write-Host "`n== $msg" -ForegroundColor Cyan }
 function Fail($msg) {
     Write-Host "`nSETUP STOPPED: $msg" -ForegroundColor Red
     Write-Host "Copy everything in this window and send it to Claude for the fix."
+    Hold
     exit 1
 }
 function Refresh-Path {
@@ -57,7 +62,7 @@ if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
 Write-Host "ffmpeg found."
 
 Say "Creating a private Python environment in .venv"
-$venvPy = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
+$venvPy = Join-Path $AppDir '.venv\Scripts\python.exe'
 if (-not (Test-Path $venvPy)) {
     & $py[0] @pyExtra -m venv .venv
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $venvPy)) { Fail "could not create the .venv folder." }
@@ -68,7 +73,7 @@ Say "Installing the clipper and its libraries (takes a few minutes the first tim
 & $venvPy -m pip install -e . --disable-pip-version-check
 if ($LASTEXITCODE -ne 0) { Fail "installing the libraries failed (see the red text above)." }
 
-$env:Path = (Join-Path $PSScriptRoot '.venv\Scripts') + ';' + $env:Path
+$env:Path = (Join-Path $AppDir '.venv\Scripts') + ';' + $env:Path
 
 Say "Your keys"
 & $venvPy -m clipper setup
@@ -83,3 +88,4 @@ if ($keysOk) {
 } else {
     Write-Host "`nAlmost done: the Twitch keys are still missing. Double-click SETUP-WINDOWS.bat again once you have them." -ForegroundColor Yellow
 }
+Hold
