@@ -7,7 +7,7 @@ rem Windows runs files opened inside a ZIP from a temp folder; refuse that.
 if /i not "%HERE:\AppData\Local\Temp\=%"=="%HERE%" goto :notextracted
 if not exist "%~dp0.venv\Scripts\python.exe" goto :nosetup
 set "PATH=%~dp0.venv\Scripts;%PATH%"
-echo Watching live GTA VI streams. Clips go to the data\clips folder.
+echo Clipper starting. Clips go to the data\clips folder.
 echo Leave this window open. Close it to stop.
 echo.
 "%~dp0.venv\Scripts\python.exe" -m clipper run %*
